@@ -2,6 +2,13 @@
 # Author: zhao chen
 # Date: 2021/7/2
 
+'''
+reference：
+    https://github.com/CyrilZhao-sudo/tab-transformer-pytorch
+    https://github.com/rixwew/pytorch-fm
+    https://arxiv.org/abs/2012.06678   "TabTransformer: Tabular Data Modeling Using Contextual Embeddings "
+'''
+
 import torch
 import math
 import torch.nn.functional as F
