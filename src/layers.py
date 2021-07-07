@@ -6,7 +6,6 @@
 reference：
     https://github.com/CyrilZhao-sudo/tab-transformer-pytorch
     https://github.com/rixwew/pytorch-fm
-    https://arxiv.org/abs/2012.06678   "TabTransformer: Tabular Data Modeling Using Contextual Embeddings "
 '''
 
 import torch
@@ -37,10 +36,10 @@ class MultiHeadAttention(torch.nn.Module):
         self.input_dim = input_dim
         self.n_head = n_head
         self.head_dim = input_dim // n_head
-        self.q_w = torch.nn.Linear(input_dim, n_head * self.head_dim)
-        self.k_w = torch.nn.Linear(input_dim, n_head * self.head_dim)
-        self.v_w = torch.nn.Linear(input_dim, n_head * self.head_dim)
-        self.out = torch.nn.Linear(n_head * self.head_dim, n_head * self.head_dim)
+        self.q_w = torch.nn.Linear(input_dim, n_head * self.head_dim, bias=False)
+        self.k_w = torch.nn.Linear(input_dim, n_head * self.head_dim, bias=False)
+        self.v_w = torch.nn.Linear(input_dim, n_head * self.head_dim, bias=False)
+        self.out = torch.nn.Linear(n_head * self.head_dim, n_head * self.head_dim, bias=False)
         self.attention = ScaleDotProductAttention(dropout=dropout)
 
     def forward(self, q, k, v, mask=None):
