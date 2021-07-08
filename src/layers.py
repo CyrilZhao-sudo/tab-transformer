@@ -9,7 +9,6 @@ reference：
 '''
 
 import torch
-import math
 import torch.nn.functional as F
 import numpy as np
 
@@ -21,13 +20,13 @@ class ScaleDotProductAttention(torch.nn.Module):
 
     def forward(self, q, k, v, mask=None):
         d = q.size()[-1]
-        attn_scores = torch.matmul(q, k.permute(0, 2, 1)) / math.sqrt(d)
-        if mask:
+        attn_scores = torch.matmul(q, k.transpose(2, 3)) / (d ** 0.5)
+        if mask is not None:
             attn_scores = torch.masked_fill(attn_scores, mask == 0, -1e9)
         attn_scores = torch.softmax(attn_scores, dim=-1)
         attn_scores = self.dropout(attn_scores)
-        att_output = torch.matmul(attn_scores, v)
-        return att_output
+        attn_output = torch.matmul(attn_scores, v)
+        return attn_output
 
 
 class MultiHeadAttention(torch.nn.Module):
@@ -39,23 +38,20 @@ class MultiHeadAttention(torch.nn.Module):
         self.q_w = torch.nn.Linear(input_dim, n_head * self.head_dim, bias=False)
         self.k_w = torch.nn.Linear(input_dim, n_head * self.head_dim, bias=False)
         self.v_w = torch.nn.Linear(input_dim, n_head * self.head_dim, bias=False)
-        self.out = torch.nn.Linear(n_head * self.head_dim, n_head * self.head_dim, bias=False)
+        self.fc = torch.nn.Linear(n_head * self.head_dim, input_dim, bias=False)
         self.attention = ScaleDotProductAttention(dropout=dropout)
 
     def forward(self, q, k, v, mask=None):
         batch_size, seq_len, input_dim = q.size()
-        q = self.q_w(q).reshape(batch_size, seq_len, self.n_head, self.head_dim).permute(0, 2, 1, 3).reshape(
-            batch_size * self.n_head, seq_len, self.head_dim)
-        k = self.k_w(k).reshape(batch_size, seq_len, self.n_head, self.head_dim).permute(0, 2, 1, 3).reshape(
-            batch_size * self.n_head, seq_len, self.head_dim)
-        v = self.v_w(v).reshape(batch_size, seq_len, self.n_head, self.head_dim).permute(0, 2, 1, 3).reshape(
-            batch_size * self.n_head, seq_len, self.head_dim)
-        if mask:
+        q = self.q_w(q).view(batch_size, seq_len, self.n_head, self.head_dim)
+        k = self.k_w(k).view(batch_size, seq_len, self.n_head, self.head_dim)
+        v = self.v_w(v).view(batch_size, seq_len, self.n_head, self.head_dim)
+        q, k, v = q.transpose(1, 2), k.transpose(1, 2), v.transpose(1, 2)
+        if mask is not None:
             mask = mask.unsqueeze(1)
         attn_out = self.attention(q, k, v, mask=mask)
-        attn_out = attn_out.reshape(batch_size, self.n_head, seq_len, self.head_dim).permute(0, 2, 1, 3).reshape(
-            batch_size, seq_len, self.n_head * self.head_dim)
-        out = self.out(attn_out)
+        attn_out = attn_out.transpose(1, 2).contiguous().view(batch_size, seq_len, -1)
+        out = self.fc(attn_out)
         return out
 
 
