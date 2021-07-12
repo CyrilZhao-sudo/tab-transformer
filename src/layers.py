@@ -4,7 +4,7 @@
 
 '''
 reference：
-    https://github.com/CyrilZhao-sudo/tab-transformer-pytorch
+    https://github.com/lucidrains/tab-transformer-pytorch
     https://github.com/rixwew/pytorch-fm
 '''
 
@@ -143,7 +143,7 @@ class TabTransformerEncoder(torch.nn.Module):
     def forward(self, x):
         '''
         N 个 encoder block
-        :param x: embedd_x
+        :param x: embed_x
         :return:
         '''
         out = self.transformer(x)
